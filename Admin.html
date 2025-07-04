@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Fast Paisa Admin Panel</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      color: #25D366;
+      text-align: center;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .status {
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🛠 Fast Paisa Admin Panel</h1>
+
+  <div class="card">
+    <p>✅ Firebase connected successfully.</p>
+    <p>This panel will later show:</p>
+    <ul>
+      <li>📝 Withdrawal requests</li>
+      <li>👥 Referred user data</li>
+      <li>📊 Task completions</li>
+    </ul>
+    <div class="status" id="status">Initializing Firebase...</div>
+  </div>
+
+  <script>
+    // ✅ Your Firebase Config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCX_TM_vX75GElLpJaJenBEFo3V0YQVgGA",
+      authDomain: "fast-paisa-1ba58.firebaseapp.com",
+      projectId: "fast-paisa-1ba58",
+      storageBucket: "fast-paisa-1ba58.firebasestorage.app",
+      messagingSenderId: "427927362131",
+      appId: "1:427927362131:web:be4f39b336a73c77c404a6",
+      measurementId: "G-CPD1FVWLWB"
+    };
+
+    // ✅ Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Just to test Firebase loaded
+    document.getElementById("status").innerText = "✅ Firebase Initialized!";
+  </script>
+
+</body>
+</html>
