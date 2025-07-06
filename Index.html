@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Wow Earning</title>
+    <!-- Telegram Mini App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-red: #e53935;
+            --text-dark: #212529;
+            --text-light: #6c757d;
+            --bg-color: #ffffff;
+            --nav-bg: #f8f9fa;
+            --border-color: #e9ecef;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Layout --- */
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--bg-color);
+            flex-shrink: 0;
+        }
+        .top-bar .title { font-weight: 600; font-size: 18px; }
+        .top-bar svg { width: 24px; height: 24px; color: var(--text-dark); }
+        .top-bar .right-icons { display: flex; align-items: center; gap: 15px; }
+
+        .sub-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            border-bottom: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .sub-header .brand-name { color: var(--primary-red); font-weight: 700; font-size: 22px; }
+        .sub-header .wallet-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background-color: #ffebee;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: var(--primary-red);
+            border: 1px solid #ffcdd2;
+        }
+        .sub-header .wallet-chip svg { width: 20px; height: 20px; }
+
+        main {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .app-section { display: none; }
+        .app-section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+        
+        /* --- Reusable Components --- */
+        .card {
+            background-color: var(--bg-color);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .app-button {
+            background-color: var(--primary-red);
+            color: white; border: none; padding: 15px;
+            border-radius: 12px; font-size: 18px; font-weight: 600;
+            cursor: pointer; width: 100%; margin-top: 20px;
+            transition: background-color 0.2s;
+        }
+        .app-button:disabled { background-color: #ced4da; cursor: not-allowed; }
+
+        /* --- Section Specific Styles --- */
+        .offer-card { display: flex; align-items: center; justify-content: space-between; }
+        .offer-card .info { display: flex; align-items: center; gap: 15px; }
+        .offer-card .info img { width: 45px; height: 45px; border-radius: 8px; }
+        .offer-card .info .name { font-weight: 500; font-size: 15px; }
+        .offer-card .reward {
+            color: var(--primary-red); font-weight: 600;
+            border: 1px solid var(--primary-red); padding: 5px 10px; border-radius: 20px; font-size: 14px;
+        }
+
+        .spin-container { text-align: center; }
+        .wheel-container { position: relative; width: 280px; height: 280px; margin: 20px auto; }
+        #wheel {
+            width: 100%; height: 100%; border-radius: 50%;
+            background: conic-gradient(#e57373 0% 10%, #f06292 10% 20%, #e57373 20% 30%, #f06292 30% 40%, #e57373 40% 50%, #f06292 50% 60%, #e57373 60% 70%, #f06292 70% 80%, #e57373 80% 90%, #f06292 90% 100%);
+            position: relative; transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+            display: flex; align-items: center; justify-content: center;
+            border: 5px solid white; box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .wheel-center { width: 50px; height: 50px; background: white; border-radius: 50%; z-index: 2; }
+        .wheel-value { position: absolute; color: white; font-weight: 700; transform: var(--transform); }
+        .pointer {
+            position: absolute; top: -5px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 15px solid transparent;
+            border-right: 15px solid transparent; border-bottom: 30px solid var(--primary-red);
+            z-index: 10;
+        }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 5px; font-size: 14px; }
+        .form-group input {
+            width: 100%; padding: 12px; border: 1px solid var(--border-color);
+            border-radius: 8px; font-size: 16px; box-sizing: border-box;
+        }
+
+        #transaction-history li {
+            display: flex; justify-content: space-between;
+            padding: 10px 0; border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+        #transaction-history li:last-child { border-bottom: none; }
+        #transaction-history .amount { font-weight: 600; }
+        #transaction-history .amount.positive { color: #2e7d32; }
+        #transaction-history .amount.negative { color: #c62828; }
+
+        /* --- Bottom Navigation --- */
+        .bottom-nav {
+            display: flex; justify-content: space-around; background-color: var(--nav-bg);
+            padding: 10px 0; border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        .nav-btn {
+            background: none; border: none; cursor: pointer; display: flex; flex-direction: column;
+            align-items: center; gap: 4px; font-size: 12px;
+            color: var(--text-light); flex: 1; transition: color 0.2s;
+        }
+        .nav-btn .icon {
+            --icon-fill: none;
+            --icon-stroke: var(--text-light);
+        }
+        .nav-btn.active { color: var(--primary-red); font-weight: 500; }
+        .nav-btn.active .icon {
+            --icon-fill: var(--primary-red);
+            --icon-stroke: var(--primary-red);
+        }
+        .nav-btn svg { width: 24px; height: 24px; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Top Bar -->
+        <header class="top-bar">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M19,6.41L17.59,5L12,10.59L6.41,5L5,6.41L10.59,12L5,17.59L6.41,19L12,13.41L17.59,19L19,17.59L13.41,12L19,6.41Z"/></svg>
+            <span class="title">WOW EARNING</span>
+            <div class="right-icons">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12,16A2,2 0 0,1 14,18A2,2 0 0,1 12,20A2,2 0 0,1 10,18A2,2 0 0,1 12,16M12,10A2,2 0 0,1 14,12A2,2 0 0,1 12,14A2,2 0 0,1 10,12A2,2 0 0,1 12,10M12,4A2,2 0 0,1 14,6A2,2 0 0,1 12,8A2,2 0 0,1 10,6A2,2 0 0,1 12,4Z"/></svg>
+            </div>
+        </header>
+
+        <!-- Sub Header -->
+        <div class="sub-header">
+            <span class="brand-name">Wow Earning</span>
+            <div class="wallet-chip">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4Z" /></svg>
+                <span id="wallet-balance">0.00</span>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main>
+            <section id="home" class="app-section">
+                <div class="offer-list"></div>
+            </section>
+
+            <section id="spin" class="app-section">
+                <div class="card spin-container">
+                    <h2>Spin & Win Coins</h2>
+                    <div class="wheel-container">
+                        <div class="pointer"></div>
+                        <div id="wheel"><div class="wheel-center"></div></div>
+                    </div>
+                    <button id="spin-btn" class="app-button">Spin Now</button>
+                </div>
+            </section>
+
+            <section id="refer" class="app-section">
+                <div class="card" style="text-align: center;">
+                    <h2>Refer & Earn</h2>
+                    <p style="color:var(--text-light); font-size:14px;">Share your code with friends. When they sign up, you both get bonus coins!</p>
+                    <div style="margin:20px 0; padding: 15px; background-color: #f8f9fa; border: 1px dashed #ced4da; border-radius: 8px;">
+                        <span style="font-size: 14px; color: var(--text-light);">Your Referral Code</span>
+                        <p id="referral-code" style="font-size: 24px; font-weight: 700; color: var(--primary-red); letter-spacing: 2px; margin: 5px 0 0 0;">WOW2024</p>
+                    </div>
+                    <button class="app-button" onclick="copyReferralCode()">Copy Code</button>
+                </div>
+            </section>
+
+            <section id="wallet" class="app-section">
+                <div class="card">
+                    <h2>Withdraw Funds</h2>
+                    <div class="form-group">
+                        <label for="upi-id">UPI ID</label>
+                        <input type="text" id="upi-id" placeholder="yourname@upi">
+                    </div>
+                    <div class="form-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" placeholder="0.00">
+                    </div>
+                    <button class="app-button" onclick="handleRedeem()">Request Withdrawal</button>
+                </div>
+                <div class="card">
+                    <h2>Transaction History</h2>
+                    <ul id="transaction-history" style="list-style: none; padding: 0;"></ul>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-section="home">
+                <div class="icon"><svg viewBox="0 0 24 24"><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M3 10.182V22h18V10.182L12 2Z"/></svg></div>
+                <span>Home</span>
+            </button>
+            <button class="nav-btn" data-section="spin">
+                <div class="icon"><svg viewBox="0 0 24 24"><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M12 21a9 9 0 1 0-9-9" stroke-linecap="round"/><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M12 21a9 9 0 0 0 9-9" stroke-linecap="round" stroke-dasharray="0.1 3"/><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M12 3v3m4.95 1.05l-2.122 2.122M21 12h-3m-1.05 4.95l-2.122-2.122M12 21v-3m-4.95-1.05l2.122-2.122M3 12h3m1.05-4.95l2.122 2.122"/></svg></div>
+                <span>Spin</span>
+            </button>
+            <button class="nav-btn" data-section="refer">
+                <div class="icon"><svg viewBox="0 0 24 24"><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M18 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 8a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm12 0a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM6 22a2 2 0 1 0 0-4 2 2 0 0 0 0 4ZM8.59 10.999l6.82 3M8.59 5.001l6.82 3"/></svg></div>
+                <span>Refer</span>
+            </button>
+            <button class="nav-btn" data-section="wallet">
+                <div class="icon"><svg viewBox="0 0 24 24"><path fill="var(--icon-fill)" stroke="var(--icon-stroke)" stroke-width="1.5" d="M2 10V4.5A1.5 1.5 0 0 1 3.5 3h17A1.5 1.5 0 0 1 22 4.5v15A1.5 1.5 0 0 1 20.5 21H3.5A1.5 1.5 0 0 1 2 19.5v-4.084c0-.447.195-.873.528-1.159l2.946-2.526a1.5 1.5 0 0 1 .954-.33h0a1.5 1.5 0 0 0 .954-.33L10.328 8.5a1.5 1.5 0 0 1 1.08-.415h1.184a1.5 1.5 0 0 1 1.08.415l2.946 2.526a1.5 1.5 0 0 0 .954.33h0a1.5 1.5 0 0 1 .954.33l2.946 2.526c.333.286.528.712.528 1.159V21M7 8v1m10-1v1"/></svg></div>
+                <span>Wallet</span>
+            </button>
+        </nav>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const WebApp = window.Telegram.WebApp;
+    WebApp.ready();
+
+    // Mockup Data
+    const appState = {
+        coins: 0.00,
+        referralCode: "WOW2024",
+        transactions: [
+            { description: 'Daily Login Bonus', amount: 5.00 },
+            { description: 'Spin Wheel Win', amount: 20.00 },
+            { description: 'Withdrawal to UPI', amount: -15.00 },
+        ],
+        offers: [
+            { name: "Install AppX", icon: "https://play-lh.googleusercontent.com/ePIERQxMhWjRCOh92aO8s0Z_Azz11J3vUqisdJ075B_kC6x1D-B2i6syhT0wTww-5w=s256-rw", reward: 150 },
+            { name: "Survey Complete", icon: "https://play-lh.googleusercontent.com/w4pG9MMw-euIuN232h35P16Y5i_I5Qbo3SnkM7dC3Gpe253-l-102q-9uAX3E4FmuQ=s256-rw", reward: 50 },
+        ],
+        spinWheel: { isSpinning: false, values: [10, 5, 50, 2, 100, 0, 20, 1, 25, 15] }
+    };
+
+    // DOM Elements
+    const elements = {
+        walletBalance: document.getElementById('wallet-balance'),
+        sections: document.querySelectorAll('.app-section'),
+        navButtons: document.querySelectorAll('.nav-btn'),
+        offerList: document.querySelector('.offer-list'),
+        wheel: document.getElementById('wheel'),
+        spinBtn: document.getElementById('spin-btn'),
+        referralCode: document.getElementById('referral-code'),
+        transactionHistory: document.getElementById('transaction-history'),
+    };
+
+    // Render Functions
+    const render = {
+        wallet: () => { elements.walletBalance.textContent = appState.coins.toFixed(2); },
+        offers: () => {
+            elements.offerList.innerHTML = appState.offers.map(offer => `
+                <div class="card offer-card">
+                    <div class="info"><img src="${offer.icon}" alt="${offer.name}"><div class="name">${offer.name}</div></div>
+                    <div class="reward">+ ${offer.reward}</div>
+                </div>`).join('');
+        },
+        spinWheelValues: () => {
+            const num = appState.spinWheel.values.length;
+            const angle = 360 / num;
+            elements.wheel.innerHTML = '<div class="wheel-center"></div>';
+            appState.spinWheel.values.forEach((val, i) => {
+                const rot = (i * angle) + (angle / 2);
+                elements.wheel.innerHTML += `<div class="wheel-value" style="--transform: rotate(${rot}deg) translate(105px);">${val}</div>`;
+            });
+        },
+        transactions: () => {
+            elements.transactionHistory.innerHTML = appState.transactions.map(t => `
+                <li>
+                    <span>${t.description}</span>
+                    <span class="amount ${t.amount > 0 ? 'positive' : 'negative'}">${t.amount.toFixed(2)}</span>
+                </li>`).join('');
+        }
+    };
+
+    // Actions
+    function showSection(sectionId) {
+        elements.sections.forEach(sec => sec.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        elements.navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === sectionId));
+    }
+
+    function handleSpin() {
+        if (appState.spinWheel.isSpinning) return;
+        appState.spinWheel.isSpinning = true;
+        elements.spinBtn.disabled = true;
+
+        const num = appState.spinWheel.values.length;
+        const segmentAngle = 360 / num;
+        const randomSegment = Math.floor(Math.random() * num);
+        const spinAngle = (randomSegment * segmentAngle) + (segmentAngle / 2);
+        const totalRotation = 360 * 5 + spinAngle;
+        
+        elements.wheel.style.transform = `rotate(-${totalRotation}deg)`;
+
+        setTimeout(() => {
+            const reward = appState.spinWheel.values[randomSegment];
+            WebApp.showAlert(`Congratulations! You won ${reward} coins!`);
+            if (reward > 0) {
+                appState.coins += reward;
+                appState.transactions.unshift({ description: 'Spin Wheel Win', amount: reward });
+                render.wallet();
+                render.transactions();
+            }
+            appState.spinWheel.isSpinning = false;
+            elements.spinBtn.disabled = false;
+        }, 5000);
+    }
+    
+    window.copyReferralCode = () => {
+        navigator.clipboard.writeText(appState.referralCode).then(() => {
+            WebApp.showAlert('Referral code copied!');
+        });
+    };
+
+    window.handleRedeem = () => {
+        const amountEl = document.getElementById('amount');
+        const upiEl = document.getElementById('upi-id');
+        const amount = parseFloat(amountEl.value);
+
+        if (!upiEl.value || !amount || amount <= 0) {
+            WebApp.showAlert('Please enter a valid UPI ID and amount.');
+            return;
+        }
+        if (amount > appState.coins) {
+            WebApp.showAlert('Insufficient balance.');
+            return;
+        }
+
+        appState.coins -= amount;
+        appState.transactions.unshift({ description: `Withdraw to ${upiEl.value}`, amount: -amount });
+        render.wallet();
+        render.transactions();
+        WebApp.showAlert(`Withdrawal request for ${amount.toFixed(2)} has been submitted.`);
+        amountEl.value = '';
+        upiEl.value = '';
+    };
+
+    // Initialization
+    function init() {
+        appState.coins = appState.transactions.reduce((sum, t) => sum + t.amount, 0);
+
+        render.wallet();
+        render.offers();
+        render.spinWheelValues();
+        render.transactions();
+
+        elements.navButtons.forEach(button => {
+            button.addEventListener('click', () => showSection(button.dataset.section));
+        });
+        elements.spinBtn.addEventListener('click', handleSpin);
+        
+        showSection('home');
+    }
+
+    init();
+});
+</script>
+
+</body>
+</html>
