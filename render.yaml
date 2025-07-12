@@ -6,5 +6,5 @@ services:
     buildCommand: ""
     startCommand: python main.py
     envVars:
-      - key: BOT_TOKEN
+      - key: "7215344264:AAH_-h_D-DA_fZKPMLH98NQhAFRb_w3OF30"
         value: "7215344264:AAH_-h_D-DA_fZKPMLH98NQhAFRb_w3OF30"
