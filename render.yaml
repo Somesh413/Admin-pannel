@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fast-paisa-bot
+    env: python
+    plan: free
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        value: "7215344264:AAH_-h_D-DA_fZKPMLH98NQhAFRb_w3OF30"  # 59 characters from BotFather
