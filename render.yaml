@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: fast-paisa-bot
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: BOT_TOKEN
+        value: "7215344264:AAH_-h_D-DA_fZKPMLH98NQhAFRb_w3OF30"  # Your full token
+      - key: MINI_APP_URL
+        value: "https://cute-twilight-6eefd1.netlify.app"
